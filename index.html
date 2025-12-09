@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Supabase Login Test</title>
+</head>
+<body>
+  <h1>Supabase Login Test</h1>
+
+  <!-- Sign up form -->
+  <h2>Sign Up</h2>
+  <form id="signup-form">
+    <input type="text" id="signup-username" placeholder="Username" required />
+    <input type="password" id="signup-password" placeholder="Password" required />
+    <button type="submit">Sign Up</button>
+  </form>
+  <p id="signup-message"></p>
+
+  <!-- Login form -->
+  <h2>Login</h2>
+  <form id="login-form">
+    <input type="text" id="login-username" placeholder="Username" required />
+    <input type="password" id="login-password" placeholder="Password" required />
+    <button type="submit">Login</button>
+  </form>
+  <p id="login-message"></p>
+
+  <!-- Supabase JS from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // 1. Initialize Supabase client
+    const { createClient } = supabase;
+
+    const SUPABASE_URL = "https://hrdpjfuwwugwyarcxyjx.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyZHBqZnV3d3Vnd3lhcmN4eWp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyMTU4MTgsImV4cCI6MjA4MDc5MTgxOH0.6wzWTR0OUD2rU-fsH_bcFJ0i_1w6MAWzBknN_5M8VSQ"; // paste your anon key
+
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 2. Sign up = insert into users table
+    const signupForm = document.getElementById("signup-form");
+    const signupMsg = document.getElementById("signup-message");
+
+    signupForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById("signup-username").value;
+      const password = document.getElementById("signup-password").value;
+
+      const { data, error } = await client
+        .from("users")
+        .insert([{ username, password }]); // plain password only for testing
+
+      if (error) {
+        console.error(error);
+        signupMsg.textContent = "Error: " + error.message;
+      } else {
+        signupMsg.textContent = "User created!";
+        signupForm.reset();
+      }
+    });
+
+    // 3. Login = check username + password exists
+    const loginForm = document.getElementById("login-form");
+    const loginMsg = document.getElementById("login-message");
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById("login-username").value;
+      const password = document.getElementById("login-password").value;
+
+      const { data, error } = await client
+        .from("users")
+        .select("*")
+        .eq("username", username)
+        .eq("password", password)
+        .maybeSingle();
+
+      if (error) {
+        console.error(error);
+        loginMsg.textContent = "Error: " + error.message;
+      } else if (!data) {
+        loginMsg.textContent = "Invalid username or password";
+      } else {
+        loginMsg.textContent = "Login success! User id: " + data.id;
+      }
+    });
+  </script>
+</body>
+</html>
